@@ -36,6 +36,14 @@ class WriteStatSql:
     @staticmethod
     def write_stat_data(load_flags, stat_data, tmp_dir, sql_cur, local_infile):
         """ write stat files (MET and VSDB) to a SQL database.
+        
+            Args:
+                load_flags (dict?): dictionary of values indicating what to load.
+                stat_data (pd.DataFrame):
+                tmp_dir (str): temporary directory 
+                sql_cur (cursor): cursor object
+                local_infile (str | None): indicates if local-file is set in db. Expects "ON", "OFF" or None.
+        
             Returns:
                N/A
         """

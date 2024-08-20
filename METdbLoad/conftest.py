@@ -1,8 +1,11 @@
 import pytest
 import sys
 import os
-
 from pathlib import Path
+from unittest.mock import MagicMock, patch
+
+from METdataio.METdbLoad.ush.read_data_files import ReadDataFiles
+
 
 # add METdataio directory to path so packages can be found
 top_dir = str(Path(__file__).parents[1])
@@ -82,6 +85,19 @@ def get_xml_test_file(tmp_path, stat_file_dir):
         text_file.write(_populate_xml_load_spec(stat_file_dir))
     return xml_path
 
+@pytest.fixture
+def get_file_data(get_xml_loadfile):
+    """Return a test ReadDataFile object"""
+    
+    XML_LOADFILE = get_xml_loadfile()
+    FILE_DATA = ReadDataFiles()
+    FILE_DATA.read_data(XML_LOADFILE.flags,
+                        XML_LOADFILE.load_files,
+                        XML_LOADFILE.line_types)
+    
+    return FILE_DATA
+
+
 
 
 @pytest.fixture
@@ -95,3 +111,21 @@ def get_xml_loadfile(get_xml_test_file):
         return XML_LOADFILE
 
     return load_and_read_xml
+
+
+@pytest.fixture
+def mockRunSql():
+    """Mock fixture for RunSql."""
+
+    from METdataio.METdbLoad.ush import run_sql
+    
+    class testRunSql(run_sql.RunSql):
+
+        def sql_on(self, connection):
+            self.local_infile = "ON"
+            self.conn = MagicMock()
+            self.cur = MagicMock()
+        
+
+    with patch.object(run_sql, "RunSql", return_value=testRunSql()):
+        yield run_sql.RunSql()

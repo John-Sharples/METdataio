@@ -2,15 +2,51 @@
 """Test reading data files."""
 
 import pytest
-
 # pylint:disable=import-error
 # imported modules exist
 import os
-
 from METdataio.METdbLoad.ush.read_data_files import ReadDataFiles
 from METdataio.METdbLoad.ush.run_sql import RunSql
 from METdataio.METdbLoad.ush.write_file_sql import WriteFileSql
 from METdataio.METdbLoad.ush.write_stat_sql import WriteStatSql
+
+
+def test_mockSQL(get_file_data, mockRunSql, tmp_path):
+    # Setup the inputs
+    tmp_dir = tmp_path / "mockSql"
+    tmp_dir.mkdir()
+    file_data = get_file_data
+    
+    # Setup the mock Cursor
+    run_sql = mockRunSql
+    run_sql.sql_on("connection")
+    mockCur = run_sql.cur
+   
+    # Specific values for this test
+    mockCur.rowcount = len(file_data.stat_data) 
+    mockCur.fetchone.return_value = [len(file_data.stat_data) + 1]
+    
+    # Run WriteStatSql
+    wss = WriteStatSql()
+    wss.write_stat_data(
+        {"stat_header_db_check": True}, 
+        file_data.stat_data, 
+        tmp_dir, 
+        mockCur, 
+        "ON")
+    
+    wss.write_stat_data(
+        {"stat_header_db_check": False}, 
+        file_data.stat_data, 
+        tmp_dir, 
+        mockCur, 
+        "OFF")
+    
+    # assert that the right thing was written to the db
+    mockCur.executemany.assert_called_with(
+        'INSERT INTO stat_header (stat_header_id,version,model,descr,fcst_var,fcst_units,fcst_lev,obs_var,obs_units,obs_lev,obtype,vx_mask,interp_mthd,interp_pnts,fcst_thresh,obs_thresh) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)',
+        [[8, 'V4.2', 'WRF', 'NA', 'TMP', 'NA', 'Z2', 'TMP', 'NA', 'Z2', 'ADPSFC', 'FULL', 'UW_MEAN', 1, 'NA', 'NA'], [9, 'V4.2', 'WRF', 'NA', 'TMP', 'NA', 'Z2', 'TMP', 'NA', 'Z2', 'ADPSFC', 'FULL', 'UW_MEAN', 1, '>=5.000', '>=5.000']])
+
 
 
 def test_counts(get_xml_loadfile):
