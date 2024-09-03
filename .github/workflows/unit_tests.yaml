@@ -39,7 +39,7 @@ jobs:
           MARIADB_USER: test_user
           MARIADB_PASSWORD: test_password
         ports:
-          - 3306
+          - 3306:3306
         options: --health-cmd="healthcheck.sh --connect --innodb_initialized" --health-interval=10s --health-timeout=5s --health-retries=3
 
     strategy:
