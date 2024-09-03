@@ -2,7 +2,7 @@ import pymysql
 
 
 def test_mysql_available():
-    conn = pymysql.connect(host='127.0.0.1',
+    conn = pymysql.connect(host='host.docker.internal',
                     port=3306,
                     user='root',
                     password='root_password')
