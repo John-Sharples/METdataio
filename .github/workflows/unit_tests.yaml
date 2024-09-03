@@ -29,6 +29,18 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:latest
+        env:
+          MYSQL_DATABASE: mv_test
+          MYSQL_ROOT_PASSWORD: test
+        ports:
+          - 3306:3306
+          # verify mysql container is reachable from the ubuntu host
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+  
     strategy:
       fail-fast: false
       matrix:
@@ -69,6 +81,7 @@ jobs:
         run: |
           coverage run --append -m pytest METreformat
           coverage run --append -m pytest METreadnc
+          coverage run --append -m pytest METdbLoad/test
           coverage report -m
           echo "Finished unit tests and coverage"
 
