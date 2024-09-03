@@ -13,6 +13,28 @@ from METdataio.METdbLoad.ush.write_file_sql import WriteFileSql
 from METdataio.METdbLoad.ush.write_stat_sql import WriteStatSql
 
 
+def test_empty_db(get_file_data, emptyRunSql, tmp_path):
+    # Setup the inputs
+    tmp_dir = tmp_path / "mockSql"
+    tmp_dir.mkdir()
+    file_data = get_file_data
+
+
+    # Specific values for this test
+    mockCur.rowcount = len(file_data.stat_data) 
+    mockCur.fetchone.return_value = [len(file_data.stat_data) + 1]
+
+    # Run WriteStatSql
+    wss = WriteStatSql()
+    wss.write_stat_data(
+        {"stat_header_db_check": True}, 
+        file_data.stat_data, 
+        tmp_dir, 
+        emptyRunSql.cur, 
+        "ON")
+
+    # read db and check write
+
 def test_counts(get_xml_loadfile):
     """Count lines in database tables."""
     pytest.skip('Required input file not available')

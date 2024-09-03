@@ -1,12 +1,77 @@
 import pytest
 import sys
 import os
-
+import pymysql
+import logging
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 # add METdataio directory to path so packages can be found
 top_dir = str(Path(__file__).parents[1])
 sys.path.insert(0, os.path.abspath(top_dir))
+
+
+def maria_conn():
+    try:
+        conn = pymysql.connect(
+            host='localhost',
+            port=3306,
+            user='root',
+            password='root_password',
+        )
+    
+    except Exception as e:
+        # Test run will fail if db is not found.
+        # TODO: If we want to run tests that don't require a db when db is missing
+        # we could put pytest.skip here instead of raising the exception.
+        logger.error("Failed to create database connection.")
+        raise e
+    
+    return conn
+
+
+def get_empty_db_conn():
+    conn = maria_conn()
+
+    with conn.cursor() as cur:
+        cur.execute("DROP DATABASE IF EXISTS mv_test;")
+        cur.execute("CREATE DATABASE mv_test;")
+    conn.commit()
+    conn.close()
+
+    db_conn = pymysql.connect(
+            host='localhost',
+            port=3306,
+            user='root',
+            password='root_password',
+            database='mv_test',
+            autocommit=True,
+        )
+    
+    with db_conn.cursor() as cur:
+        cur.execute(sql_string)
+    
+    yield db_conn
+
+    db_conn.close()
+
+
+@pytest.fixture
+def emptyRunSql():
+    """Patch RunSql with an empty db"""
+
+    from METdataio.METdbLoad.ush import run_sql
+
+    class testRunSql(run_sql.RunSql):
+
+        def sql_on(self, connection):
+            self.local_infile = "ON"
+            self.conn = get_empty_db_conn()
+            self.cur = self.conn.cursor()
+
+    with patch.object(run_sql, "RunSql", return_value=testRunSql()):
+        yield run_sql.RunSql()
 
 
 # This is a sample of data copied from test file point_stat_DUP_SINGLE_120000L_20120409_120000V.stat
