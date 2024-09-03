@@ -13,6 +13,7 @@ on:
       - bugfix_*
       - issue_*
       - gha_*
+      - test_*
     paths-ignore:
       - 'docs/**'
       - '.github/pull_request_template.md'
@@ -30,17 +31,25 @@ jobs:
 
     runs-on: ubuntu-latest
 
-    services:
-      mysql:
-        image: mysql:latest
-        env:
-          MYSQL_DATABASE: mv_test
-          MYSQL_ROOT_PASSWORD: test
-        ports:
-          - 3306:3306
-          # verify mysql container is reachable from the ubuntu host
-        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
-  
+  services:
+    # adopted from 
+    # https://mariadb.org/mariadb-server-docker-official-images-healthcheck-without-mysqladmin/
+    mariadb:
+      image: mariadb:latest
+      env:
+        MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: true
+        MARIADB_MYSQL_LOCALHOST_USER: 1
+        MARIADB_MYSQL_LOCALHOST_GRANTS: USAGE
+      ports:
+        - 3306
+      healthcheck:
+        test: [ "CMD", "healthcheck.sh", "--su-mysql", "--connect", "--innodb_initialized" ]
+        start_period: 1m
+        start_interval: 10s
+        interval: 1m
+        timeout: 5s
+        retries: 3
+
     strategy:
       fail-fast: false
       matrix:
