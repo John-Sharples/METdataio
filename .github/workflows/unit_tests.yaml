@@ -33,8 +33,6 @@ jobs:
     services:
       mariadb:
         image: mariadb:latest
-        ports:
-          - 3306:3306
         env:
           MARIADB_ROOT_PASSWORD: root_password
           MARIADB_DATABASE: test_db
