@@ -2,8 +2,9 @@ import pymysql
 
 
 def test_mysql_available():
-    conn = pymysql.connect(host='127.0.0.1',
+    conn = pymysql.connect(host='localhost',
                        user='test',
                        password='test')
     
     conn.cursor().execute("CREATE DATABASE mv_test")
+    
