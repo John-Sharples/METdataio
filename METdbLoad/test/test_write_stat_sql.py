@@ -19,10 +19,10 @@ def test_empty_db(get_file_data, emptyRunSql, tmp_path):
     tmp_dir.mkdir()
     file_data = get_file_data
 
-
-    # Specific values for this test
-    mockCur.rowcount = len(file_data.stat_data) 
-    mockCur.fetchone.return_value = [len(file_data.stat_data) + 1]
+    # Setup the Cursor
+    run_sql = emptyRunSql
+    run_sql.sql_on("connection")
+    cur = run_sql.cur
 
     # Run WriteStatSql
     wss = WriteStatSql()
