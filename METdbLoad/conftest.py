@@ -4,6 +4,9 @@ import os
 import pymysql
 import logging
 from pathlib import Path
+from unittest.mock import MagicMock, patch
+
+from METdataio.METdbLoad.ush.read_data_files import ReadDataFiles
 
 logger = logging.getLogger(__name__)
 
@@ -160,3 +163,16 @@ def get_xml_loadfile(get_xml_test_file):
         return XML_LOADFILE
 
     return load_and_read_xml
+
+
+@pytest.fixture
+def get_file_data(get_xml_loadfile):
+    """Return a test ReadDataFile object"""
+
+    XML_LOADFILE = get_xml_loadfile()
+    FILE_DATA = ReadDataFiles()
+    FILE_DATA.read_data(XML_LOADFILE.flags,
+                        XML_LOADFILE.load_files,
+                        XML_LOADFILE.line_types)
+
+    return FILE_DATA
