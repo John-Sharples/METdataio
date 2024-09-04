@@ -13,16 +13,11 @@ from METdataio.METdbLoad.ush.write_file_sql import WriteFileSql
 from METdataio.METdbLoad.ush.write_stat_sql import WriteStatSql
 
 
-def test_empty_db(get_file_data, emptyRunSql, tmp_path):
+def test_empty_db(get_file_data, testRunSql, tmp_path):
     # Setup the inputs
     tmp_dir = tmp_path / "mockSql"
     tmp_dir.mkdir()
     file_data = get_file_data
-
-    # Setup the Cursor
-    run_sql = emptyRunSql
-    run_sql.sql_on("connection")
-    cur = run_sql.cur
 
     # Run WriteStatSql
     wss = WriteStatSql()
@@ -30,7 +25,7 @@ def test_empty_db(get_file_data, emptyRunSql, tmp_path):
         {"stat_header_db_check": True}, 
         file_data.stat_data, 
         tmp_dir, 
-        emptyRunSql.cur, 
+        testRunSql.cur, 
         "ON")
 
     # read db and check write

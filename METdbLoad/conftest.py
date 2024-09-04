@@ -7,6 +7,7 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 from METdataio.METdbLoad.ush.read_data_files import ReadDataFiles
+from METdataio.METdbLoad.ush.run_sql import RunSql
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +35,10 @@ def maria_conn():
     return conn
 
 
-def get_empty_db_conn():
+def emptyDB():
+    """Drop and recreate the database"""
+
+    # Drop and recreate mv_test database
     conn = maria_conn()
 
     with conn.cursor() as cur:
@@ -52,29 +56,33 @@ def get_empty_db_conn():
             autocommit=True,
         )
     
+    with open(Path(top_dir) / 'METdataio/METdbLoad/sql/mv_mysql.sql', 'r') as f:
+        sql_string = f.read()
+
     with db_conn.cursor() as cur:
         cur.execute(sql_string)
     
-    yield db_conn
-
     db_conn.close()
 
 
 @pytest.fixture
-def emptyRunSql():
-    """Patch RunSql with an empty db"""
+def testRunSql():
+    """Return an instance of RunSql with a connection setup 
+    to an empty database. Calling this fixture will DROP all 
+    data from the db.
+    """
+    emptyDB()
+    connection = {
+            'db_host': 'localhost',
+            'db_port': 3306,
+            'db_user': 'root',
+            'db_password': 'root_password',
+            'db_database': 'mv_test',
+    }
 
-    from METdataio.METdbLoad.ush import run_sql
-
-    class testRunSql(run_sql.RunSql):
-
-        def sql_on(self, connection):
-            self.local_infile = "ON"
-            self.conn = get_empty_db_conn()
-            self.cur = self.conn.cursor()
-
-    with patch.object(run_sql, "RunSql", return_value=testRunSql()):
-        yield run_sql.RunSql()
+    testRunSql = RunSql()
+    testRunSql.sql_on(connection)
+    return testRunSql
 
 
 # This is a sample of data copied from test file point_stat_DUP_SINGLE_120000L_20120409_120000V.stat
